@@ -6,6 +6,7 @@ This script can work without a virtual environment
 
 import sys
 import os
+import subprocess
 
 # Add current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -53,6 +54,31 @@ def check_dependencies():
 
     return True
 
+def run_with_system_python():
+    """Run the importer using system Python to avoid Chrome sandbox issues"""
+    # Get the system Python path
+    system_python = "/usr/bin/python3"
+
+    # Get the current script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Build the command to run the importer
+    cmd = [system_python, os.path.join(script_dir, "telegram_importer.py")]
+
+    # Add command line arguments
+    cmd.extend(sys.argv[1:])
+
+    # Run the command
+    try:
+        result = subprocess.run(cmd, cwd=script_dir, check=True)
+        return result.returncode
+    except subprocess.CalledProcessError as e:
+        print(f"Error running importer: {e}")
+        return e.returncode
+    except FileNotFoundError:
+        print("System Python not found at /usr/bin/python3")
+        return 1
+
 def main():
     """Main function"""
     print("Telegram to WordPress Importer - Dependency Check")
@@ -63,39 +89,10 @@ def main():
         return 1
 
     print("\n✓ All dependencies available!")
-    print("\nStarting importer...")
+    print("\nStarting importer with system Python...")
 
-    try:
-        from telegram_importer import TelegramImporter
-
-        # Parse command line arguments
-        start_index = 0
-        batch_size = None
-
-        if len(sys.argv) > 1:
-            try:
-                start_index = int(sys.argv[1])
-            except ValueError:
-                print("Invalid start index. Using 0.")
-
-        if len(sys.argv) > 2:
-            try:
-                batch_size = int(sys.argv[2])
-            except ValueError:
-                print("Invalid batch size. Using default.")
-
-        # Run importer
-        importer = TelegramImporter()
-        next_index = importer.run(start_index, batch_size)
-
-        if batch_size and batch_size > 0:
-            print(f"\nTo continue, run: python3 run_importer.py {next_index} {batch_size}")
-
-        return 0
-
-    except Exception as e:
-        print(f"Error running importer: {e}")
-        return 1
+    # Run with system Python to avoid Chrome sandbox issues
+    return run_with_system_python()
 
 if __name__ == "__main__":
     sys.exit(main())

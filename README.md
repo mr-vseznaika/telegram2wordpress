@@ -46,6 +46,7 @@ WORDPRESS_APPLICATION_PASSWORD=your_app_password
 
 # Import Settings
 BATCH_SIZE=1
+EXPORT_DIR=ChatExport_2025-07-27
 ```
 
 ### Categories and Tags
@@ -90,6 +91,21 @@ python run_importer.py 20 10
 # Import all remaining posts
 python run_importer.py 50 0
 ```
+
+### Custom Export Directory
+```bash
+# Use different export directory
+python run_importer.py --export-dir ChatExport_2025-07-26
+
+# Combine with batch processing
+python run_importer.py --export-dir ChatExport_2025-07-26 10 5
+```
+
+### Command Line Arguments
+- `--export-dir DIR` - Specify export directory (overrides .env setting)
+- `start_index` - Start from this message index (default: 0)
+- `batch_size` - Number of messages to process (default: from .env or 1)
+- `--help` or `-h` - Show usage information
 
 ### Import Progress
 The importer shows progress and suggests the next command:
@@ -139,7 +155,29 @@ Ensure WordPress REST API is enabled (default in modern WordPress).
 - Links media to posts automatically
 - Handles file path corrections
 
-## 🐛 Troubleshooting
+## 🛠️ Troubleshooting
+
+### Chrome Sandbox Error
+If you encounter this error:
+```
+The setuid sandbox is not running as root. Common causes:
+  * An unprivileged process using ptrace on it, like a debugger.
+  * A parent process set prctl(PR_SET_NO_NEW_PRIVS, ...)
+Failed to move to new namespace: PID namespaces supported, Network namespace supported, but failed: errno = Operation not permitted
+```
+
+**Solution:** This happens when running Python through Cursor (Electron-based editor). The updated `run_importer.py` automatically uses system Python to avoid this issue:
+
+```bash
+python3 run_importer.py
+```
+
+Alternatively, you can use system Python directly:
+```bash
+/usr/bin/python3 telegram_importer.py
+```
+
+**Why this happens:** Cursor is an Electron application (based on Chrome) and its embedded Python environment has Chrome dependencies that conflict with the sandbox security feature.
 
 ### Authentication Issues
 - Check WordPress REST API is enabled

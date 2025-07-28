@@ -172,29 +172,68 @@ class TelegramImporter:
 
 def main():
     """Main function for command line usage"""
-    importer = TelegramImporter()
-
     # Parse command line arguments
     start_index = 0
     batch_size = None
+    export_dir = None
 
-    if len(sys.argv) > 1:
-        try:
-            start_index = int(sys.argv[1])
-        except ValueError:
-            print("Invalid start index. Using 0.")
+    # Parse arguments
+    args = sys.argv[1:]
+    i = 0
 
-    if len(sys.argv) > 2:
-        try:
-            batch_size = int(sys.argv[2])
-        except ValueError:
-            print("Invalid batch size. Using default.")
+    while i < len(args):
+        arg = args[i]
+
+        if arg == '--export-dir' and i + 1 < len(args):
+            export_dir = args[i + 1]
+            i += 2
+        elif arg.startswith('--export-dir='):
+            export_dir = arg.split('=', 1)[1]
+            i += 1
+        elif arg == '--help' or arg == '-h':
+            print("Usage: python telegram_importer.py [--export-dir DIR] [start_index] [batch_size]")
+            print("\nArguments:")
+            print("  --export-dir DIR    Specify export directory (default: from .env or ChatExport_2025-07-27)")
+            print("  start_index         Start from this message index (default: 0)")
+            print("  batch_size          Number of messages to process (default: from .env or 1)")
+            print("\nExamples:")
+            print("  python telegram_importer.py")
+            print("  python telegram_importer.py 10 5")
+            print("  python telegram_importer.py --export-dir ChatExport_2025-07-26")
+            print("  python telegram_importer.py --export-dir ChatExport_2025-07-26 10 5")
+            return 0
+        else:
+            # Try to parse as start_index or batch_size
+            try:
+                if start_index == 0:
+                    start_index = int(arg)
+                elif batch_size is None:
+                    batch_size = int(arg)
+                else:
+                    print(f"Unknown argument: {arg}")
+                    return 1
+            except ValueError:
+                print(f"Invalid argument: {arg}")
+                return 1
+            i += 1
+
+    # Update export directory if specified
+    if export_dir:
+        Config.set_export_dir(export_dir)
+        print(f"Using export directory: {export_dir}")
+
+    importer = TelegramImporter()
 
     # Run import
     next_index = importer.run(start_index, batch_size)
 
     if batch_size and batch_size > 0:
-        print(f"To continue, run: python telegram_importer.py {next_index} {batch_size}")
+        cmd = f"python telegram_importer.py {next_index} {batch_size}"
+        if export_dir:
+            cmd = f"python telegram_importer.py --export-dir {export_dir} {next_index} {batch_size}"
+        print(f"To continue, run: {cmd}")
+
+    return 0
 
 if __name__ == "__main__":
     main()

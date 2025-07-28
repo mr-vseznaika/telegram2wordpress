@@ -19,9 +19,15 @@ class Config:
     DEFAULT_AUTHOR_ID = 1
     DEFAULT_STATUS = 'publish'
 
-    # File paths
-    EXPORT_DIR = 'ChatExport_2025-07-26'
+    # File paths - can be overridden by environment variable or command line
+    EXPORT_DIR = os.getenv('EXPORT_DIR', 'ChatExport_2025-07-27')
     PHOTOS_DIR = os.path.join(EXPORT_DIR, 'photos')
+
+    @classmethod
+    def set_export_dir(cls, export_dir):
+        """Update export directory and recalculate photos directory"""
+        cls.EXPORT_DIR = export_dir
+        cls.PHOTOS_DIR = os.path.join(export_dir, 'photos')
 
     # Load categories and tags from external files
     @staticmethod
