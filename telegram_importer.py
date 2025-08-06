@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Main script for the Telegram to WordPress importer.
+This script can work without a virtual environment.
+"""
 import json
 import os
 import sys
@@ -5,6 +10,49 @@ from pathlib import Path
 from wordpress_api import WordPressAPI
 from content_processor import ContentProcessor
 from config import Config
+
+def check_dependencies():
+    """Check if required dependencies are available"""
+    missing_deps = []
+
+    try:
+        import requests
+        print("✓ requests module available")
+    except ImportError:
+        missing_deps.append("requests")
+        print("✗ requests module missing")
+
+    try:
+        import dateutil
+        print("✓ python-dateutil module available")
+    except ImportError:
+        missing_deps.append("python-dateutil")
+        print("✗ python-dateutil module missing")
+
+    try:
+        import PIL
+        print("✓ Pillow module available")
+    except ImportError:
+        missing_deps.append("Pillow")
+        print("✗ Pillow module missing")
+
+    try:
+        import dotenv
+        print("✓ python-dotenv module available")
+    except ImportError:
+        missing_deps.append("python-dotenv")
+        print("✗ python-dotenv module missing")
+
+    if missing_deps:
+        print(f"\nMissing dependencies: {', '.join(missing_deps)}")
+        print("\nTo install dependencies:")
+        print("1. Create virtual environment: python3 -m venv venv")
+        print("2. Activate it: source venv/bin/activate")
+        print("3. Install: pip install -r requirements.txt")
+        print("\nOr install directly: pip3 install --user " + " ".join(missing_deps))
+        return False
+
+    return True
 
 class TelegramImporter:
     def __init__(self):
@@ -172,6 +220,16 @@ class TelegramImporter:
 
 def main():
     """Main function for command line usage"""
+    print("Telegram to WordPress Importer")
+    print("=" * 50)
+
+    if not check_dependencies():
+        print("\nPlease install missing dependencies and try again.")
+        return 1
+
+    print("\n✓ All dependencies available!")
+    print("\nStarting importer...")
+
     # Parse command line arguments
     start_index = 0
     batch_size = None
